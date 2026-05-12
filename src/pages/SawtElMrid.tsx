@@ -4,7 +4,7 @@ import { ArrowRight, Plus, ThumbsUp, Filter, Megaphone } from 'lucide-react'
 import type { Testimony } from '../data/testimonies'
 import { categoryLabels, categoryColors } from '../data/testimonies'
 
-const API = 'https://rafiq-production-dfa1.up.railway.app/api'
+const API = import.meta.env.VITE_API_URL || 'https://rafiq-production-dfa1.up.railway.app/api'
 
 const wilayas = [
   'الجزائر', 'وهران', 'قسنطينة', 'سطيف', 'باتنة', 'عنابة', 'بليدة',
@@ -22,6 +22,8 @@ export default function SawtElMrid() {
   const [formMessage, setFormMessage] = useState('')
   const [stats, setStats] = useState({ total: 0, delay: 0, medication: 0 })
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const fetchTestimonies = async () => {
     try {
@@ -51,6 +53,8 @@ export default function SawtElMrid() {
 
   const handleSubmit = async () => {
     if (!formName.trim() || !formMessage.trim() || !formWilaya) return
+    setIsSubmitting(true)
+    setError('')
     try {
       const res = await fetch(`${API}/testimonies`, {
         method: 'POST',
@@ -69,9 +73,14 @@ export default function SawtElMrid() {
         setShowForm(false)
         fetchTestimonies()
         fetchStats()
+      } else {
+        const data = await res.json()
+        setError(data.error || 'حدث خطأ. حاول مرة أخرى.')
       }
     } catch (e) {
-      console.error('Error posting testimony:', e)
+      setError('ما قدرناش نتصلو بالسيرفر. تأكد من الاتصال بالإنترنت.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -170,9 +179,12 @@ export default function SawtElMrid() {
           />
 
           <div className="flex gap-2">
-            <button onClick={handleSubmit} className="btn-primary flex-1">نشر</button>
+            <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary flex-1 disabled:opacity-50">
+              {isSubmitting ? 'جاري النشر...' : 'نشر'}
+            </button>
             <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-bold">إلغاء</button>
           </div>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         </div>
       )}
 
