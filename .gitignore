@@ -1,0 +1,23 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor
+.vscode/*
+.idea
+.DS_Store
+
+# Server DB (generated at runtime)
+server/rafiq.db
+server/rafiq.db-shm
+server/rafiq.db-wal
+server/test.json
+generate-plan.cjs
+*.docx
+~$*
