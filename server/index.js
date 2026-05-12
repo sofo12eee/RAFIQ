@@ -74,7 +74,17 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://192.168.1.30:5174',
 ];
-app.use(cors({ origin: allowedOrigins }));
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10kb' }));
 
 // Rate limiting
