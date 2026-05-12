@@ -1,6 +1,6 @@
 export async function onRequest(context) {
   const url = new URL(context.request.url);
-  const RAILWAY_URL = context.env.RAILWAY_URL || 'https://rafiq-production.up.railway.app';
+  const RAILWAY_URL = context.env.RAILWAY_URL || 'https://rafiq-production-dfa1.up.railway.app';
   const apiPath = url.pathname + url.search;
   
   const response = await fetch(RAILWAY_URL + apiPath, {
