@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 // PostgreSQL connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('railway') ? { rejectUnauthorized: false } : false,
+  ssl: { rejectUnauthorized: false },
 });
 
 // Create tables
