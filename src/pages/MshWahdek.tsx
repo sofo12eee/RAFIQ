@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Heart, RefreshCw, Plus, ThumbsUp } from 'lucide-react'
 import { dailyMessages } from '../data/stories'
 
-const API = '/api'
+const API = 'https://rafiq-production-dfa1.up.railway.app/api'
 
 interface Story {
   id: number
