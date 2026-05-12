@@ -102,9 +102,6 @@ function getRows(sql, params = []) {
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend
-app.use(express.static(path.join(__dirname, '..', 'dist')));
-
 // ===== TESTIMONIES API =====
 
 app.get('/api/testimonies', (req, res) => {
@@ -176,9 +173,9 @@ app.post('/api/stories/:id/like', (req, res) => {
   res.json(rows[0]);
 });
 
-// SPA fallback
-app.get('/{*splat}', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+// Health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', app: 'rafiq' });
 });
 
 // Start
