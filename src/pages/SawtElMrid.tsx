@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Plus, ThumbsUp, Filter, Megaphone } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import type { Testimony } from '../data/testimonies'
 import { categoryLabels, categoryColors } from '../data/testimonies'
-
-const API = import.meta.env.VITE_API_URL || ''
 
 const wilayas = [
   'الجزائر', 'وهران', 'قسنطينة', 'سطيف', 'باتنة', 'عنابة', 'بليدة',
@@ -27,12 +26,22 @@ export default function SawtElMrid() {
 
   const fetchTestimonies = async () => {
     try {
-      const url = filter === 'all' ? `${API}/testimonies` : `${API}/testimonies?category=${filter}`
-      const res = await fetch(url)
-      const data = await res.json()
-      setTestimonies(data)
+      setLoading(true)
+      let query = supabase
+        .from('testimonies')
+        .select('*')
+        .order('id', { ascending: false })
+      
+      if (filter !== 'all') {
+        query = query.eq('category', filter)
+      }
+      
+      const { data, error } = await query
+      if (error) throw error
+      setTestimonies(data || [])
     } catch (e) {
       console.error('Error fetching testimonies:', e)
+      setError('ما قدرناش نجيبو البيانات')
     } finally {
       setLoading(false)
     }
@@ -40,9 +49,21 @@ export default function SawtElMrid() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API}/testimonies/stats`)
-      const data = await res.json()
-      setStats(data)
+      const { count: total } = await supabase
+        .from('testimonies')
+        .select('*', { count: 'exact', head: true })
+      
+      const { count: delay } = await supabase
+        .from('testimonies')
+        .select('*', { count: 'exact', head: true })
+        .eq('category', 'delay')
+      
+      const { count: medication } = await supabase
+        .from('testimonies')
+        .select('*', { count: 'exact', head: true })
+        .eq('category', 'medication')
+      
+      setStats({ total: total || 0, delay: delay || 0, medication: medication || 0 })
     } catch (e) {
       console.error('Error fetching stats:', e)
     }
@@ -56,39 +77,45 @@ export default function SawtElMrid() {
     setIsSubmitting(true)
     setError('')
     try {
-      const res = await fetch(`${API}/testimonies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from('testimonies')
+        .insert([{
           name: formName.trim(),
           wilaya: formWilaya,
           category: formCategory,
           message: formMessage.trim(),
-        }),
-      })
-      if (res.ok) {
-        setFormName('')
-        setFormWilaya('')
-        setFormMessage('')
-        setShowForm(false)
-        fetchTestimonies()
-        fetchStats()
-      } else {
-        const data = await res.json()
-        setError(data.error || 'حدث خطأ. حاول مرة أخرى.')
-      }
-    } catch (e) {
-      setError('ما قدرناش نتصلو بالسيرفر. تأكد من الاتصال بالإنترنت.')
+        }])
+        .select()
+      
+      if (error) throw error
+      
+      setFormName('')
+      setFormWilaya('')
+      setFormMessage('')
+      setShowForm(false)
+      fetchTestimonies()
+      fetchStats()
+    } catch (e: any) {
+      setError(e.message || 'حدث خطأ. حاول مرة أخرى.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleLike = async (id: string | number) => {
+  const handleLike = async (id: number) => {
     try {
-      await fetch(`${API}/testimonies/${id}/like`, { method: 'POST' })
+      const testimony = testimonies.find(t => t.id === id)
+      if (!testimony) return
+      
+      const { error } = await supabase
+        .from('testimonies')
+        .update({ likes: testimony.likes + 1 })
+        .eq('id', id)
+      
+      if (error) throw error
+      
       setTestimonies(testimonies.map(t =>
-        t.id === String(id) || t.id === id ? { ...t, likes: t.likes + 1 } : t
+        t.id === id ? { ...t, likes: t.likes + 1 } : t
       ))
     } catch (e) {
       console.error('Error liking:', e)
@@ -102,7 +129,6 @@ export default function SawtElMrid() {
         <h2 className="text-xl font-bold text-gray-800">صوت المريض</h2>
       </div>
 
-      {/* Intro */}
       <div className="card bg-gradient-to-l from-red-50 to-white border border-red-200">
         <div className="flex items-start gap-3">
           <Megaphone className="text-red-400 mt-1 shrink-0" size={20} />
@@ -114,7 +140,6 @@ export default function SawtElMrid() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
           <p className="text-xl font-bold text-gray-800">{stats.total}</p>
@@ -130,7 +155,6 @@ export default function SawtElMrid() {
         </div>
       </div>
 
-      {/* Add button */}
       <button
         onClick={() => setShowForm(!showForm)}
         className="btn-primary w-full flex items-center justify-center gap-2"
@@ -138,7 +162,6 @@ export default function SawtElMrid() {
         <Plus size={18} /> شارك تجربتك
       </button>
 
-      {/* Form */}
       {showForm && (
         <div className="card border border-teal-200 space-y-3">
           <h3 className="font-bold text-gray-800">شارك شكواك أو تجربتك</h3>
@@ -188,7 +211,6 @@ export default function SawtElMrid() {
         </div>
       )}
 
-      {/* Filter */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <Filter size={14} className="text-gray-400 shrink-0" />
         <button
@@ -212,7 +234,6 @@ export default function SawtElMrid() {
         ))}
       </div>
 
-      {/* Testimonies list */}
       {loading ? (
         <p className="text-center text-gray-400 text-sm py-6">جاري التحميل...</p>
       ) : (

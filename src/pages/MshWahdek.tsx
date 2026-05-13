@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Heart, RefreshCw, Plus, ThumbsUp } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import { dailyMessages } from '../data/stories'
-
-const API = import.meta.env.VITE_API_URL || ''
 
 interface Story {
   id: number
@@ -23,6 +22,8 @@ export default function MshWahdek() {
   const [formAge, setFormAge] = useState('')
   const [formType, setFormType] = useState('')
   const [formMessage, setFormMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const today = new Date().getDate()
@@ -32,9 +33,13 @@ export default function MshWahdek() {
 
   const fetchStories = async () => {
     try {
-      const res = await fetch(`${API}/stories`)
-      const data = await res.json()
-      setStories(data)
+      const { data, error } = await supabase
+        .from('stories')
+        .select('*')
+        .order('id', { ascending: false })
+      
+      if (error) throw error
+      setStories(data || [])
     } catch (e) {
       console.error('Error fetching stories:', e)
     }
@@ -46,34 +51,49 @@ export default function MshWahdek() {
 
   const handleSubmit = async () => {
     if (!formName.trim() || !formType.trim() || !formMessage.trim()) return
+    setIsSubmitting(true)
+    setError('')
     try {
-      const res = await fetch(`${API}/stories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from('stories')
+        .insert([{
           name: formName.trim(),
           age: formAge ? Number(formAge) : null,
           cancer_type: formType.trim(),
           message: formMessage.trim(),
-        }),
-      })
-      if (res.ok) {
-        setFormName('')
-        setFormAge('')
-        setFormType('')
-        setFormMessage('')
-        setShowForm(false)
-        fetchStories()
-      }
-    } catch (e) {
-      console.error('Error posting story:', e)
+        }])
+        .select()
+      
+      if (error) throw error
+      
+      setFormName('')
+      setFormAge('')
+      setFormType('')
+      setFormMessage('')
+      setShowForm(false)
+      fetchStories()
+    } catch (e: any) {
+      setError(e.message || 'حدث خطأ. حاول مرة أخرى.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleLike = async (id: number) => {
     try {
-      await fetch(`${API}/stories/${id}/like`, { method: 'POST' })
-      setStories(stories.map(s => s.id === id ? { ...s, likes: s.likes + 1 } : s))
+      const story = stories.find(s => s.id === id)
+      if (!story) return
+      
+      const { error } = await supabase
+        .from('stories')
+        .update({ likes: story.likes + 1 })
+        .eq('id', id)
+      
+      if (error) throw error
+      
+      setStories(stories.map(s =>
+        s.id === id ? { ...s, likes: s.likes + 1 } : s
+      ))
     } catch (e) {
       console.error('Error liking:', e)
     }
@@ -86,7 +106,6 @@ export default function MshWahdek() {
         <h2 className="text-xl font-bold text-gray-800">ما راكش وحدك</h2>
       </div>
 
-      {/* Daily message */}
       <div className="card bg-gradient-to-l from-teal-50 to-emerald-50 border border-teal-200">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -101,7 +120,6 @@ export default function MshWahdek() {
         </div>
       </div>
 
-      {/* Add story button */}
       <button
         onClick={() => setShowForm(!showForm)}
         className="btn-primary w-full flex items-center justify-center gap-2"
@@ -109,7 +127,6 @@ export default function MshWahdek() {
         <Plus size={18} /> شارك قصتك وألهم غيرك
       </button>
 
-      {/* Form */}
       {showForm && (
         <div className="card border border-teal-200 space-y-3">
           <h3 className="font-bold text-gray-800">شارك تجربتك مع المرض</h3>
@@ -149,13 +166,15 @@ export default function MshWahdek() {
           />
 
           <div className="flex gap-2">
-            <button onClick={handleSubmit} className="btn-primary flex-1">نشر القصة</button>
+            <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary flex-1 disabled:opacity-50">
+              {isSubmitting ? 'جاري النشر...' : 'نشر القصة'}
+            </button>
             <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-bold">إلغاء</button>
           </div>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         </div>
       )}
 
-      {/* Survivor stories */}
       <h3 className="font-bold text-gray-700 flex items-center gap-2 pt-2">
         <Heart size={18} className="text-rose-400" />
         قصص ناس قدرو
@@ -192,7 +211,6 @@ export default function MshWahdek() {
         <p className="text-center text-gray-400 text-sm py-6">ما كاين حتى قصة بعد. كون أول واحد يشارك!</p>
       )}
 
-      {/* Emergency support */}
       <div className="card bg-amber-50 border border-amber-200">
         <h3 className="font-bold text-amber-700 mb-2">📞 تحتاج تهدر مع حد؟</h3>
         <p className="text-sm text-gray-600 leading-relaxed">
