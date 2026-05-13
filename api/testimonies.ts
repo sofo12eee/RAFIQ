@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import pool from '../lib/db.js';
+import sql from '../lib/db.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,10 +11,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
       const { category } = req.query;
-      const result = category && category !== 'all'
-        ? await pool.query('SELECT * FROM testimonies WHERE category = $1 ORDER BY id DESC', [category])
-        : await pool.query('SELECT * FROM testimonies ORDER BY id DESC');
-      return res.json(result.rows);
+      const rows = category && category !== 'all'
+        ? await sql`SELECT * FROM testimonies WHERE category = ${category} ORDER BY id DESC`
+        : await sql`SELECT * FROM testimonies ORDER BY id DESC`;
+      return res.json(rows);
     }
 
     if (req.method === 'POST') {
@@ -22,11 +22,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!name || !wilaya || !category || !message) {
         return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
       }
-      const result = await pool.query(
-        'INSERT INTO testimonies (name, wilaya, category, message, date) VALUES ($1, $2, $3, $4, CURRENT_DATE::TEXT) RETURNING *',
-        [name.trim(), wilaya, category, message.trim()]
-      );
-      return res.status(201).json(result.rows[0]);
+      const rows = await sql`
+        INSERT INTO testimonies (name, wilaya, category, message, date)
+        VALUES (${name.trim()}, ${wilaya}, ${category}, ${message.trim()}, CURRENT_DATE::TEXT)
+        RETURNING *
+      `;
+      return res.status(201).json(rows[0]);
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
