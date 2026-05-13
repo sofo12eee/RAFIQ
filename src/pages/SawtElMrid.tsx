@@ -4,7 +4,7 @@ import { ArrowRight, Plus, ThumbsUp, Filter, Megaphone } from 'lucide-react'
 import type { Testimony } from '../data/testimonies'
 import { categoryLabels, categoryColors } from '../data/testimonies'
 
-const API = import.meta.env.VITE_API_URL || 'https://rafiq-production-dfa1.up.railway.app/api'
+const API = import.meta.env.VITE_API_URL || ''
 
 const wilayas = [
   'الجزائر', 'وهران', 'قسنطينة', 'سطيف', 'باتنة', 'عنابة', 'بليدة',
