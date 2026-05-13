@@ -24,7 +24,7 @@ export const categoryColors: Record<Testimony['category'], string> = {
 
 export const sampleTestimonies: Testimony[] = [
   {
-    id: '1',
+    id: 1,
     name: 'سفيان',
     wilaya: 'سطيف',
     category: 'delay',
@@ -33,7 +33,7 @@ export const sampleTestimonies: Testimony[] = [
     likes: 24,
   },
   {
-    id: '2',
+    id: 2,
     name: 'خديجة',
     wilaya: 'الجزائر',
     category: 'medication',
@@ -42,7 +42,7 @@ export const sampleTestimonies: Testimony[] = [
     likes: 18,
   },
   {
-    id: '3',
+    id: 3,
     name: 'محمد',
     wilaya: 'وهران',
     category: 'delay',
@@ -51,7 +51,7 @@ export const sampleTestimonies: Testimony[] = [
     likes: 31,
   },
   {
-    id: '4',
+    id: 4,
     name: 'فاطمة',
     wilaya: 'قسنطينة',
     category: 'medication',
@@ -60,7 +60,7 @@ export const sampleTestimonies: Testimony[] = [
     likes: 27,
   },
   {
-    id: '5',
+    id: 5,
     name: 'عبد الرحمان',
     wilaya: 'باتنة',
     category: 'treatment',
@@ -69,7 +69,7 @@ export const sampleTestimonies: Testimony[] = [
     likes: 42,
   },
   {
-    id: '6',
+    id: 6,
     name: 'نورة',
     wilaya: 'تيزي وزو',
     category: 'other',
