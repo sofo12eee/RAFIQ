@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import sql from '../lib/db.js';
+import pool from '../lib/db.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,8 +10,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'GET') {
-      const rows = await sql`SELECT * FROM stories ORDER BY id DESC`;
-      return res.json(rows);
+      const result = await pool.query('SELECT * FROM stories ORDER BY id DESC');
+      return res.json(result.rows);
     }
 
     if (req.method === 'POST') {
@@ -19,12 +19,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!name || !cancerType || !message) {
         return res.status(400).json({ error: 'الاسم، نوع السرطان، والرسالة مطلوبين' });
       }
-      const rows = await sql`
-        INSERT INTO stories (name, age, cancer_type, message, date)
-        VALUES (${name.trim()}, ${age ? Number(age) : null}, ${cancerType.trim()}, ${message.trim()}, CURRENT_DATE::TEXT)
-        RETURNING *
-      `;
-      return res.status(201).json(rows[0]);
+      const result = await pool.query(
+        'INSERT INTO stories (name, age, cancer_type, message, date) VALUES ($1, $2, $3, $4, CURRENT_DATE::TEXT) RETURNING *',
+        [name.trim(), age ? Number(age) : null, cancerType.trim(), message.trim()]
+      );
+      return res.status(201).json(result.rows[0]);
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

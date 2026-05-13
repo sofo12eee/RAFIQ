@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import sql from '../lib/db.js';
+import pool from '../lib/db.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,12 +16,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const table = type === 'testimony' ? 'testimonies' : type === 'story' ? 'stories' : null;
     if (!table) return res.status(400).json({ error: 'Invalid type' });
 
-    const rows = await sql`
-      UPDATE ${sql(table)} SET likes = likes + 1 WHERE id = ${Number(id)} RETURNING *
-    `;
+    const result = await pool.query(
+      `UPDATE ${table} SET likes = likes + 1 WHERE id = $1 RETURNING *`,
+      [Number(id)]
+    );
     
-    if (!rows.length) return res.status(404).json({ error: 'غير موجود' });
-    return res.json(rows[0]);
+    if (!result.rows.length) return res.status(404).json({ error: 'غير موجود' });
+    return res.json(result.rows[0]);
   } catch (error) {
     console.error('API Error:', error);
     return res.status(500).json({ error: 'خطأ في السيرفر' });
