@@ -54,7 +54,7 @@ export default function MshWahdek() {
     setIsSubmitting(true)
     setError('')
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('stories')
         .insert([{
           name: formName.trim(),

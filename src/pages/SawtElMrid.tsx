@@ -77,7 +77,7 @@ export default function SawtElMrid() {
     setIsSubmitting(true)
     setError('')
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('testimonies')
         .insert([{
           name: formName.trim(),

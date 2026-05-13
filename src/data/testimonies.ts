@@ -1,5 +1,5 @@
 export interface Testimony {
-  id: string
+  id: number
   name: string
   wilaya: string
   category: 'delay' | 'medication' | 'treatment' | 'other'
