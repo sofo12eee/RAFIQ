@@ -15,12 +15,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { id, type } = req.body;
     if (!id || !type) return res.status(400).json({ error: 'ID and type required' });
 
-    const table = type === 'testimony' ? 'testimonies' : type === 'story' ? 'stories' : null;
-    if (!table) return res.status(400).json({ error: 'Invalid type' });
-
-    const rows = await sql`
-      UPDATE ${sql(table)} SET likes = likes + 1 WHERE id = ${Number(id)} RETURNING *
-    `;
+    let rows;
+    if (type === 'testimony') {
+      rows = await sql`UPDATE testimonies SET likes = likes + 1 WHERE id = ${Number(id)} RETURNING *`;
+    } else if (type === 'story') {
+      rows = await sql`UPDATE stories SET likes = likes + 1 WHERE id = ${Number(id)} RETURNING *`;
+    } else {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
     
     if (!rows.length) return res.status(404).json({ error: 'غير موجود' });
     return res.json(rows[0]);
