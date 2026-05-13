@@ -1,5 +1,7 @@
+import { neon } from '@neondatabase/serverless';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import sql from '../lib/db.js';
+
+const sql = neon(process.env.DATABASE_URL || '');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
